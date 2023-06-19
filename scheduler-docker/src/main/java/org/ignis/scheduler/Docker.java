@@ -35,6 +35,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 /**
  * @author César Pomar
  */
@@ -305,7 +306,10 @@ public class Docker implements IScheduler {
             cmd.add("$IGNIS_WORKING_DIRECTORY/" + dockerContainer.getName() + ".out");
             cmd.add("$IGNIS_WORKING_DIRECTORY/" + dockerContainer.getName() + ".err");
             cmd.addAll(Arrays.asList(dockerContainer.getCmd()));
+            dockerContainer.withPrivileged(true);
             dockerContainer.withCmd(cmd);
+
+            
             if (path != null) {//Is a Unix-Socket
                 List<Mount> mounts = dockerContainer.getHostConfig().getMounts();
                 Mount mount = new Mount();

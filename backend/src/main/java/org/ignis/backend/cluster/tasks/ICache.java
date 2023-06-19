@@ -28,7 +28,8 @@ public class ICache {
         PRESERVE(1),
         MEMORY(2),
         RAW_MEMORY(3),
-        DISK(4);
+        DISK(4),
+        CHECKPOINT(5);
 
         private int level;
 
@@ -52,6 +53,8 @@ public class ICache {
                     return RAW_MEMORY;
                 case 4:
                     return DISK;
+                case 5:
+                    return CHECKPOINT;
                 default:
                     throw new IgnisException("Level " + level + " not found");
             }
