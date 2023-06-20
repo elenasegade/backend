@@ -32,6 +32,7 @@ import org.ignis.backend.cluster.tasks.ICache;
 import org.ignis.backend.cluster.tasks.ICache.Level;
 import org.ignis.backend.exception.IExecutorExceptionWrapper;
 import org.ignis.backend.exception.IgnisException;
+import org.ignis.properties.IKeys;
 import org.ignis.rpc.IExecutorException;
 import org.slf4j.LoggerFactory;
 
@@ -56,16 +57,15 @@ public class ICacheTask extends IExecutorTask {
     public ICacheTask(String name, IExecutor executor, ICache cache) {
         super(name, executor);
         this.cache = cache;
-        String rutaCarpeta=System.getProperty("user.dir")+"/checkpointing";
+        String rutaCarpeta=executor.getContainer().getProperties().getProperty("ignis.dfs.home") + "/" 
+                + executor.getContainer().getProperties().getProperty("ignis.job.name")+"/checkpointing";
         Path path = Paths.get(rutaCarpeta);
-        if(!Files.exists(path)){
-            try{
-                Files.createDirectory(path);
-            }catch(IOException e){
+        this.directorioCriu = rutaCarpeta;
+        try {
+                Files.createDirectories(path);
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-        this.directorioCriu = rutaCarpeta;
     }
     /*Obtiene el pid del proceso padre*/
     private Long ontenerPidPadre(){
@@ -153,12 +153,14 @@ public class ICacheTask extends IExecutorTask {
                 executor.getCacheContextModule().loadCache(cache.getId());
                 executor.getCacheContextModule().cache(cache.getId(), (byte) ICache.Level.NO_CACHE.getInt());
             }
-            if(cache.getActualLevel()==Level.CHECKPOINT){
+            if(cache.getNextLevel().equals(ICache.Level.CHECKPOINT)){
+                System.err.print("Entrou no if");
                 Long pid = ontenerPidPadre();
                 realizarCheckpointing(pid.toString());
-                cache.setActualLevel(Level.NO_CACHE);
+                executor.getCacheContextModule().cache(cache.getId(), (byte) Level.DISK.getInt());
+            }else{
+                executor.getCacheContextModule().cache(cache.getId(), (byte) cache.getNextLevel().getInt());
             }
-            executor.getCacheContextModule().cache(cache.getId(), (byte) cache.getNextLevel().getInt());
         } catch (IExecutorException ex) {
             throw new IExecutorExceptionWrapper(ex);
         } catch (TException ex) {
